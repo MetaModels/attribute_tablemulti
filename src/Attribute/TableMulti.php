@@ -80,7 +80,7 @@ class TableMulti extends BaseComplex
      */
     public function searchFor($strPattern)
     {
-        $query     = 'SELECT DISTINCT item_id FROM %1$s WHERE value LIKE :value AND att_id = :id';
+        $query     = 'SELECT DISTINCT t.item_id FROM %1$s AS t WHERE t.value LIKE :value AND t.att_id = :id';
         $statement = $this->connection->prepare($query);
         $statement->bindValue('value', str_replace(array('*', '?'), array('%', '_'), $strPattern));
         $statement->bindValue('id', $this->get('id'));
@@ -169,7 +169,7 @@ class TableMulti extends BaseComplex
                     $queryBuilder = $this->connection->createQueryBuilder()->insert($this->getValueTable());
                     foreach ($values as $name => $value) {
                         $queryBuilder
-                            ->setValue($name, ':' . $name)
+                            ->setValue($this->getValueTable() . '.' . $name, ':' . $name)
                             ->setParameter($name, $value);
                     }
 
@@ -179,7 +179,7 @@ class TableMulti extends BaseComplex
                     $queryBuilder = $this->connection->createQueryBuilder()->update($this->getValueTable());
                     foreach ($values as $name => $value) {
                         $queryBuilder
-                            ->set($name, ':' . $name)
+                            ->set($this->getValueTable() . '.' . $name, ':' . $name)
                             ->setParameter($name, $value);
                     }
 
@@ -200,17 +200,17 @@ class TableMulti extends BaseComplex
     public function getFilterOptions($idList, $usedOnly, &$arrCount = null)
     {
         $builder = $this->connection->createQueryBuilder()
-            ->select('value, COUNT(value) as mm_count')
-            ->from($this->getValueTable())
-            ->andWhere('att_id = :att_id')
+            ->select('t.value, COUNT(t.value) as mm_count')
+            ->from($this->getValueTable(), 't')
+            ->andWhere('t.att_id = :att_id')
             ->setParameter('att_id', $this->get('id'))
-            ->groupBy('value');
+            ->groupBy('t.value');
 
         if ($idList) {
             $builder
-                ->andWhere('item_id IN (:id_list)')
+                ->andWhere('t.item_id IN (:id_list)')
 
-                ->orderBy('FIELD(id,:id_list)')
+                ->orderBy('FIELD(t.id,:id_list)')
                 ->setParameter('id_list', $idList, Connection::PARAM_INT_ARRAY);
         }
 
@@ -237,9 +237,9 @@ class TableMulti extends BaseComplex
     {
         $queryBuilder = $this->connection->createQueryBuilder()
             ->select('*')
-            ->from($this->getValueTable())
-            ->orderBy('row', 'ASC')
-            ->addOrderBy('col', 'ASC');
+            ->from($this->getValueTable(), 't')
+            ->orderBy('t.row', 'ASC')
+            ->addOrderBy('t.col', 'ASC');
 
         $this->buildWhere($queryBuilder, $arrIds);
 
@@ -282,24 +282,24 @@ class TableMulti extends BaseComplex
         $varCol = null
     ) {
         $queryBuilder
-            ->andWhere('att_id = :att_id')
+            ->andWhere('t.att_id = :att_id')
             ->setParameter('att_id', (int) $this->get('id'));
 
         if (!empty($mixIds)) {
             if (is_array($mixIds)) {
                 $queryBuilder
-                    ->andWhere('item_id IN (:item_ids)')
+                    ->andWhere('t.item_id IN (:item_ids)')
                     ->setParameter('item_ids', $mixIds, Connection::PARAM_STR_ARRAY);
             } else {
                 $queryBuilder
-                    ->andWhere('item_id = :item_id')
+                    ->andWhere('t.item_id = :item_id')
                     ->setParameter('item_id', $mixIds);
             }
         }
 
         if (is_int($intRow) && is_string($varCol)) {
             $queryBuilder
-                ->andWhere('row = :row AND col = :col')
+                ->andWhere('t.row = :row AND t.col = :col')
                 ->setParameter('row', $intRow)
                 ->setParameter('col', $varCol);
         }
