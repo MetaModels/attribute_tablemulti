@@ -82,28 +82,28 @@ class ChangeTableNameMigration extends AbstractMigration
     {
         $schemaManager = $this->connection->getSchemaManager();
 
-        if ($schemaManager->tablesExist(['tl_metamodel_multi'])) {
-            $schemaManager->renameTable('tl_metamodel_multi', 'tl_metamodel_tablemulti');
-
-            $this->connection->createQueryBuilder()
-                ->update('tl_metamodel_attribute', 't')
-                ->set('t.type', ':new_name')
-                ->where('t.type=:old_name')
-                ->setParameter('new_name', 'tablemulti')
-                ->setParameter('old_name', 'multi')
-                ->execute();
-
-            $this->connection->createQueryBuilder()
-                ->update('tl_metamodel_rendersetting', 't')
-                ->set('t.template', ':new_name')
-                ->where('t.template=:old_name')
-                ->setParameter('new_name', 'mm_attr_tablemulti')
-                ->setParameter('old_name', 'mm_attr_multi')
-                ->execute();
-
-            return new MigrationResult(true, 'Rename table tl_metamodel_multi to tl_metamodel_tablemulti.');
+        if (!$schemaManager->tablesExist(['tl_metamodel_multi'])) {
+            return new MigrationResult(false, '');
         }
 
-        return new MigrationResult(false, '');
+        $schemaManager->renameTable('tl_metamodel_multi', 'tl_metamodel_tablemulti');
+
+        $this->connection->createQueryBuilder()
+            ->update('tl_metamodel_attribute', 't')
+            ->set('t.type', ':new_name')
+            ->where('t.type=:old_name')
+            ->setParameter('new_name', 'tablemulti')
+            ->setParameter('old_name', 'multi')
+            ->execute();
+
+        $this->connection->createQueryBuilder()
+            ->update('tl_metamodel_rendersetting', 't')
+            ->set('t.template', ':new_name')
+            ->where('t.template=:old_name')
+            ->setParameter('new_name', 'mm_attr_tablemulti')
+            ->setParameter('old_name', 'mm_attr_multi')
+            ->execute();
+
+        return new MigrationResult(true, 'Rename table tl_metamodel_multi to tl_metamodel_tablemulti.');
     }
 }
