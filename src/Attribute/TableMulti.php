@@ -82,7 +82,7 @@ class TableMulti extends BaseComplex
     {
         $query     = 'SELECT DISTINCT t.item_id FROM %1$s AS t WHERE t.value LIKE :value AND t.att_id = :id';
         $statement = $this->connection->prepare($query);
-        $statement->bindValue('value', str_replace(array('*', '?'), array('%', '_'), $strPattern));
+        $statement->bindValue('value', str_replace(['*', '?'], ['%', '_'], $strPattern));
         $statement->bindValue('id', $this->get('id'));
         $statement->execute();
 
@@ -94,7 +94,7 @@ class TableMulti extends BaseComplex
      */
     public function getAttributeSettingNames()
     {
-        return array_merge(parent::getAttributeSettingNames(), array());
+        return array_merge(parent::getAttributeSettingNames(), []);
     }
 
     /**
@@ -112,7 +112,7 @@ class TableMulti extends BaseComplex
      *
      * @SuppressWarnings(PHPMD.Superglobals)
      */
-    public function getFieldDefinition($arrOverrides = array())
+    public function getFieldDefinition($arrOverrides = [])
     {
         // Get table and column
         $strTable = $this->getMetaModel()->getTableName();
@@ -120,7 +120,7 @@ class TableMulti extends BaseComplex
 
         $arrFieldDef                         = parent::getFieldDefinition($arrOverrides);
         $arrFieldDef['inputType']            = 'multiColumnWizard';
-        $arrFieldDef['eval']['columnFields'] = array();
+        $arrFieldDef['eval']['columnFields'] = [];
 
         // Check for override in local config
         if (isset($GLOBALS['TL_CONFIG']['metamodelsattribute_multi'][$strTable][$strField])) {
@@ -184,7 +184,7 @@ class TableMulti extends BaseComplex
                     }
 
                     $updateSql = $queryBuilder->getSQL();
-                    $sql      .= ' ON DUPLICATE KEY ' . str_replace($this->getValueTable() . ' SET ', '', $updateSql);
+                    $sql       .= ' ON DUPLICATE KEY ' . str_replace($this->getValueTable() . ' SET ', '', $updateSql);
 
                     $this->connection->executeQuery($sql, $parameters);
                 }
@@ -209,14 +209,13 @@ class TableMulti extends BaseComplex
         if ($idList) {
             $builder
                 ->andWhere('t.item_id IN (:id_list)')
-
                 ->orderBy('FIELD(t.id,:id_list)')
                 ->setParameter('id_list', $idList, Connection::PARAM_INT_ARRAY);
         }
 
         $statement = $builder->execute();
 
-        $arrResult = array();
+        $arrResult = [];
         while ($objRow = $statement->fetch(\PDO::FETCH_OBJ)) {
             $strValue = $objRow->value;
 
@@ -241,7 +240,7 @@ class TableMulti extends BaseComplex
             ->orderBy('t.row', 'ASC')
             ->addOrderBy('t.col', 'ASC');
 
-        $this->buildWhere($queryBuilder, $arrIds);
+        $this->buildWhere($queryBuilder, $arrIds, null, null, 't');
 
         $statement = $queryBuilder->execute();
         $arrReturn = [];
@@ -259,47 +258,54 @@ class TableMulti extends BaseComplex
     public function unsetDataFor($arrIds)
     {
         $queryBuilder = $this->connection->createQueryBuilder()->delete($this->getValueTable());
-        $this->buildWhere($queryBuilder, $arrIds);
+        $this->buildWhere($queryBuilder, $arrIds, null, null, $this->getValueTable());
 
         $queryBuilder->execute();
     }
 
     /**
-     * Build the where clause
+     * Build the where clause.
      *
-     * @param QueryBuilder   $queryBuilder
+     * @param QueryBuilder   $queryBuilder The query builder.
      *
-     * @param null|array|int $mixIds
+     * @param null|array|int $mixIds       One, none or many ids to use.
      *
-     * @param null           $intRow
+     * @param null           $intRow       The row number, optional.
      *
-     * @param null           $varCol
+     * @param null           $varCol       The col number, optional.
+     *
+     * @param null           $tableAlias   The table alias, optional.
      */
     protected function buildWhere(
         QueryBuilder $queryBuilder,
         $mixIds,
         $intRow = null,
-        $varCol = null
+        $varCol = null,
+        $tableAlias = null
     ) {
+        if (null !== $tableAlias) {
+            $tableAlias .= '.';
+        }
+
         $queryBuilder
-            ->andWhere('t.att_id = :att_id')
+            ->andWhere($tableAlias . 'att_id = :att_id')
             ->setParameter('att_id', (int) $this->get('id'));
 
         if (!empty($mixIds)) {
             if (is_array($mixIds)) {
                 $queryBuilder
-                    ->andWhere('t.item_id IN (:item_ids)')
+                    ->andWhere($tableAlias . 'item_id IN (:item_ids)')
                     ->setParameter('item_ids', $mixIds, Connection::PARAM_STR_ARRAY);
             } else {
                 $queryBuilder
-                    ->andWhere('t.item_id = :item_id')
+                    ->andWhere($tableAlias . 'item_id = :item_id')
                     ->setParameter('item_id', $mixIds);
             }
         }
 
         if (is_int($intRow) && is_string($varCol)) {
             $queryBuilder
-                ->andWhere('t.row = :row AND t.col = :col')
+                ->andWhere($tableAlias . 'row = :row AND ' . $tableAlias . 'col = :col')
                 ->setParameter('row', $intRow)
                 ->setParameter('col', $varCol);
         }
@@ -311,10 +317,10 @@ class TableMulti extends BaseComplex
     public function valueToWidget($varValue)
     {
         if (!is_array($varValue)) {
-            return array();
+            return [];
         }
 
-        $widgetValue = array();
+        $widgetValue = [];
         foreach ($varValue as $row) {
             foreach ($row as $col) {
                 $widgetValue[$col['row']]['col_' . $col['col']] = $col['value'];
@@ -331,10 +337,10 @@ class TableMulti extends BaseComplex
     {
 
         if (!is_array($varValue)) {
-            return array();
+            return [];
         }
 
-        $newValue = array();
+        $newValue = [];
         // Start row numerator at 0.
         $intRow = 0;
         foreach ($varValue as $k => $row) {
