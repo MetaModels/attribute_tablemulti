@@ -80,7 +80,7 @@ class TableMulti extends BaseComplex
      */
     public function searchFor($strPattern)
     {
-        $query     = 'SELECT DISTINCT t.item_id FROM %1$s AS t WHERE t.value LIKE :value AND t.att_id = :id';
+        $query     = 'SELECT DISTINCT t.item_id FROM tl_metamodel_tabletext AS t WHERE t.value LIKE :value AND t.att_id = :id';
         $statement = $this->connection->prepare($query);
         $statement->bindValue('value', str_replace(['*', '?'], ['%', '_'], $strPattern));
         $statement->bindValue('id', $this->get('id'));
