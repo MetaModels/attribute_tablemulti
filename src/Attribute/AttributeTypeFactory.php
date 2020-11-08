@@ -3,7 +3,7 @@
 /**
  * This file is part of MetaModels/attribute_tablemulti.
  *
- * (c) 2012-2019 The MetaModels team.
+ * (c) 2012-2020 The MetaModels team.
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -17,13 +17,17 @@
  * @author     Christian Schiffler <c.schiffler@cyberspectrum.de>
  * @author     David Molineus <david.molineus@netzmacht.de>
  * @author     Ingolf Steinhardt <info@e-spin.de>
- * @copyright  2012-2019 The MetaModels team.
+ * @author     Sven Baumann <baumann.sv@gmail.com>
+ * @copyright  2012-2020 The MetaModels team.
  * @license    https://github.com/MetaModels/attribute_tablemulti/blob/master/LICENSE LGPL-3.0-or-later
  * @filesource
  */
 
 namespace MetaModels\AttributeTableMultiBundle\Attribute;
 
+use Contao\CoreBundle\Framework\Adapter;
+use Contao\StringUtil;
+use Contao\Validator;
 use Doctrine\DBAL\Connection;
 use MetaModels\Attribute\AbstractAttributeTypeFactory;
 
@@ -40,13 +44,29 @@ class AttributeTypeFactory extends AbstractAttributeTypeFactory
     private $connection;
 
     /**
+     * The string util.
+     *
+     * @var StringUtil|Adapter
+     */
+    private $stringUtil;
+
+    /**
+     * The Validator.
+     *
+     * @var Validator|Adapter
+     */
+    private $validator;
+
+    /**
      * {@inheritDoc}
      */
-    public function __construct(Connection $connection)
+    public function __construct(Connection $connection, Adapter $stringUtil, Adapter $validator)
     {
         parent::__construct();
 
         $this->connection = $connection;
+        $this->stringUtil = $stringUtil;
+        $this->validator  = $validator;
         $this->typeName   = 'tablemulti';
         $this->typeIcon   = 'bundles/metamodelsattributetablemulti/tablemulti.png';
         $this->typeClass  = 'MetaModels\Attribute\TableMulti\TableMulti';
@@ -57,6 +77,6 @@ class AttributeTypeFactory extends AbstractAttributeTypeFactory
      */
     public function createInstance($information, $metaModel)
     {
-        return new $this->typeClass($metaModel, $information, $this->connection);
+        return new $this->typeClass($metaModel, $information, $this->connection, $this->stringUtil, $this->validator);
     }
 }
