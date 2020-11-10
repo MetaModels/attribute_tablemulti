@@ -20,6 +20,7 @@
  * @author     David Maack <david.maack@arcor.de>
  * @author     David Molineus <david.molineus@netzmacht.de>
  * @author     Ingolf Steinhardt <info@e-spin.de>
+ * @author     Sven Baumann <baumann.sv@gmail.com>
  * @copyright  2012-2020 The MetaModels team.
  * @license    https://github.com/MetaModels/attribute_tablemulti/blob/master/LICENSE LGPL-3.0-or-later
  * @filesource
@@ -27,7 +28,10 @@
 
 namespace MetaModels\AttributeTableMultiBundle\Attribute;
 
+use Contao\CoreBundle\Framework\Adapter;
+use Contao\StringUtil;
 use Contao\System;
+use Contao\Validator;
 use Doctrine\DBAL\Query\QueryBuilder;
 use Doctrine\DBAL\Connection;
 use MetaModels\Attribute\BaseComplex;
@@ -46,6 +50,20 @@ class TableMulti extends BaseComplex
     private $connection;
 
     /**
+     * The string util.
+     *
+     * @var StringUtil|Adapter
+     */
+    private $stringUtil;
+
+    /**
+     * The validator.
+     *
+     * @var Validator|Adapter
+     */
+    private $validator;
+
+    /**
      * Instantiate an MetaModel attribute.
      *
      * Note that you should not use this directly but use the factory classes to instantiate attributes.
@@ -57,9 +75,16 @@ class TableMulti extends BaseComplex
      *                                      classes for information what values are understood.
      *
      * @param Connection|null $connection   The database connection.
+     * @param Adapter|null    $stringUtil   The string util.
+     * @param Adapter|null    $validator    The validator.
      */
-    public function __construct(IMetaModel $objMetaModel, array $arrData = [], Connection $connection = null)
-    {
+    public function __construct(
+        IMetaModel $objMetaModel,
+        array $arrData = [],
+        Connection $connection = null,
+        Adapter $stringUtil = null,
+        Adapter $validator = null
+    ) {
         parent::__construct($objMetaModel, $arrData);
 
         if (null === $connection) {
@@ -72,7 +97,29 @@ class TableMulti extends BaseComplex
             $connection = System::getContainer()->get('database_connection');
         }
 
+        if (null === $stringUtil) {
+            // @codingStandardsIgnoreStart
+            @trigger_error(
+                'StringUtil Adapter is missing. It has to be passed in the constructor. Fallback will be dropped.',
+                E_USER_DEPRECATED
+            );
+            // @codingStandardsIgnoreEnd
+            $stringUtil = System::getContainer()->get('contao.framework')->getAdapter(StringUtil::class);
+        }
+
+        if (null === $validator) {
+            // @codingStandardsIgnoreStart
+            @trigger_error(
+                'Validator Adapter is missing. It has to be passed in the constructor. Fallback will be dropped.',
+                E_USER_DEPRECATED
+            );
+            // @codingStandardsIgnoreEnd
+            $validator = System::getContainer()->get('contao.framework')->getAdapter(Validator::class);
+        }
+
         $this->connection = $connection;
+        $this->stringUtil = $stringUtil;
+        $this->validator  = $validator;
     }
 
     /**
@@ -368,9 +415,17 @@ class TableMulti extends BaseComplex
      */
     protected function getSetValues($arrCell, $intId)
     {
+        $value = $arrCell['value'];
+        // Convert the value, if is a binary uuid to a string uuid, for save in text blob column.
+        if (($this->validator->isBinaryUuid($value))
+            && ($this->validator->isStringUuid($convertedValue = $this->stringUtil->binToUuid($value)))
+        ) {
+            $value = $convertedValue;
+        }
+
         return array(
             'tstamp'  => time(),
-            'value'   => (string) $arrCell['value'],
+            'value'   => (string) $value,
             'att_id'  => $this->get('id'),
             'row'     => (int) $arrCell['row'],
             'col'     => $arrCell['col'],
