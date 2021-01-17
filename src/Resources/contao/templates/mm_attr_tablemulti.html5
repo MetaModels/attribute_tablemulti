@@ -19,7 +19,7 @@ $columnNames = array_keys($config['columnFields']);
     <?php foreach ((array) $this->raw as $k => $row) : ?>
         <tr class="<?= ($k % 2 == 0 ? 'odd' : 'even'); ?>">
             <?php foreach ($columnNames as $columnName): ?>
-                <td><?php echo $row[$columnName]['value']; ?></td>
+                <td><?= $row[$columnName]['value']; ?></td>
             <?php endforeach; ?>
         </tr>
     <?php endforeach; ?>
