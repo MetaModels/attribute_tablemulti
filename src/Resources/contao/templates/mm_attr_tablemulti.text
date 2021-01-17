@@ -4,12 +4,10 @@ if (!is_array($config['columnFields'])) {
     $config['columnFields'] = [];
 }
 $columnNames = array_keys($config['columnFields']);
-$lastRow = (count($this->raw) - 1);
+
 foreach ((array) $this->raw as $k => $row) {
     foreach ($columnNames as $kk => $columnName) {
         echo $row[$columnName]['value'];
     }
-    if ($k < $lastRow) {
-        echo "\n";
-    }
+    if ($k != (count((array) $this->raw['value']) -1)) echo "\n";
 }
