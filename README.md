@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/MetaModels/attribute_tablemulti.svg)](https://travis-ci.org/MetaModels/attribute_tablemulti/branches)
+[![Build Status](https://github.com/MetaModels/attribute_tablemulti/actions/workflows/diagnostics.yml/badge.svg)](https://github.com/MetaModels/attribute_tablemulti/actions)
 [![Latest Version tagged](http://img.shields.io/github/tag/MetaModels/attribute_tablemulti.svg)](https://github.com/MetaModels/attribute_tablemulti/tags)
 [![Latest Version on Packagist](http://img.shields.io/packagist/v/MetaModels/attribute_tablemulti.svg)](https://packagist.org/packages/MetaModels/attribute_tablemulti)
 [![Installations via composer per month](http://img.shields.io/packagist/dm/MetaModels/attribute_tablemulti.svg)](https://packagist.org/packages/MetaModels/attribute_tablemulti)
