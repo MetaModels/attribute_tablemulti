@@ -27,7 +27,9 @@
 
 namespace MetaModels\AttributeTableMultiBundle\Attribute;
 
+use Contao\StringUtil;
 use Contao\System;
+use Contao\Validator;
 use Doctrine\DBAL\Query\QueryBuilder;
 use Doctrine\DBAL\Connection;
 use MetaModels\Attribute\BaseComplex;
@@ -317,6 +319,10 @@ class TableMulti extends BaseComplex
         $widgetValue = array();
         foreach ($varValue as $row) {
             foreach ($row as $col) {
+                // We can't handle binary data so we have to replace it.
+                if (Validator::isStringUuid($col['value'])) {
+                    $col['value'] = StringUtil::uuidToBin($col['value']);
+                }
                 $widgetValue[$col['row']]['col_' . $col['col']] = $col['value'];
             }
         }
@@ -340,6 +346,11 @@ class TableMulti extends BaseComplex
         foreach ($varValue as $k => $row) {
             foreach ($row as $kk => $col) {
                 $kk = substr($kk, 4);
+                
+                // We cant handle binary data so we have to replace it back to string.
+                if(Validator::isBinaryUuid($col)){
+                    $col = StringUtil::binToUuid($col);
+                }
 
                 $newValue[$k][$kk]['value'] = $col;
                 $newValue[$k][$kk]['col']   = $kk;
