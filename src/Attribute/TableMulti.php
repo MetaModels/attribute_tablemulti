@@ -207,11 +207,7 @@ class TableMulti extends BaseComplex
             foreach ((array) $arrValues[$intId] as $row) {
                 // Walk every column and update / insert the value.
                 foreach ($row as $col) {
-                    // Skip empty cols but preserve cols containing '0'.
                     $values = $this->getSetValues($col, $intId);
-                    if ($values['value'] === '') {
-                        continue;
-                    }
 
                     $queryBuilder = $this->connection->createQueryBuilder()->insert($this->getValueTable());
                     foreach ($values as $name => $value) {
