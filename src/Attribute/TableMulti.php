@@ -3,7 +3,7 @@
 /**
  * This file is part of MetaModels/attribute_tablemulti.
  *
- * (c) 2012-2020 The MetaModels team.
+ * (c) 2012-2022 The MetaModels team.
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -21,7 +21,7 @@
  * @author     David Molineus <david.molineus@netzmacht.de>
  * @author     Ingolf Steinhardt <info@e-spin.de>
  * @author     Sven Baumann <baumann.sv@gmail.com>
- * @copyright  2012-2020 The MetaModels team.
+ * @copyright  2012-2022 The MetaModels team.
  * @license    https://github.com/MetaModels/attribute_tablemulti/blob/master/LICENSE LGPL-3.0-or-later
  * @filesource
  */
@@ -131,9 +131,9 @@ class TableMulti extends BaseComplex
         $statement = $this->connection->prepare($query);
         $statement->bindValue('value', str_replace(['*', '?'], ['%', '_'], $strPattern));
         $statement->bindValue('id', $this->get('id'));
-        $statement->execute();
+        $statement->executeQuery();
 
-        return $statement->fetchAll(\PDO::FETCH_COLUMN, 'item_id');
+        return $statement->fetchFirstColumn();
     }
 
     /**
@@ -256,10 +256,10 @@ class TableMulti extends BaseComplex
                 ->setParameter('id_list', $idList, Connection::PARAM_INT_ARRAY);
         }
 
-        $statement = $builder->execute();
+        $statement = $builder->executeQuery();
 
         $arrResult = [];
-        while ($objRow = $statement->fetch(\PDO::FETCH_OBJ)) {
+        while ($objRow = $statement->fetchFirstColumn()) {
             $strValue = $objRow->value;
 
             if (is_array($arrCount)) {
@@ -288,7 +288,7 @@ class TableMulti extends BaseComplex
         $statement = $queryBuilder->execute();
         $arrReturn = [];
 
-        while ($row = $statement->fetch(\PDO::FETCH_ASSOC)) {
+        while ($row = $statement->fetchAssociative()) {
             $arrReturn[$row['item_id']][$row['row']][$row['col']] = $row;
         }
 
