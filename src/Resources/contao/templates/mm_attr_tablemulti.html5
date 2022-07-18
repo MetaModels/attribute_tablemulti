@@ -1,6 +1,9 @@
 <?php
-$config = $GLOBALS['TL_CONFIG']['metamodelsattribute_multi'][$this->attribute->getMetaModel()->getTableName()][$this->attribute->getColName()] ?? [];
-if (!is_array($config['columnFields'])) {
+\Contao\Controller::loadDataContainer($this->attribute->getMetaModel()->getTableName());
+
+$config = $GLOBALS['TL_CONFIG']['metamodelsattribute_multi'][$this->attribute->getMetaModel()->getTableName(
+    )][$this->attribute->getColName()] ?? [];
+if (!isset($config['columnFields']) || !is_array($config['columnFields'])) {
     $config['columnFields'] = [];
 }
 $columnNames = array_keys($config['columnFields']);
