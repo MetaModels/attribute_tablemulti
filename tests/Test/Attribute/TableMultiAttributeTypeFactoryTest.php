@@ -17,6 +17,7 @@
  * @author     David Molineus <david.molineus@netzmacht.de>
  * @author     Ingolf Steinhardt <info@e-spin.de>
  * @author     Stefan Heimes <stefan_heimes@hotmail.com>
+ * @author     Sven Baumann <baumann.sv@gmail.com>
  * @copyright  2012-2022 The MetaModels team.
  * @license    https://github.com/MetaModels/attribute_tablemulti/blob/master/LICENSE LGPL-3.0-or-later
  * @filesource
@@ -24,6 +25,9 @@
 
 namespace MetaModels\AttributeTableMultiBundle\Test\Attribute;
 
+use Contao\CoreBundle\Framework\Adapter;
+use Contao\StringUtil;
+use Contao\Validator;
 use Doctrine\DBAL\Connection;
 use MetaModels\Attribute\IAttributeTypeFactory;
 use MetaModels\AttributeTableMultiBundle\Attribute\AttributeTypeFactory;
@@ -89,9 +93,11 @@ class TableMultiAttributeTypeFactoryTest extends TestCase
      */
     protected function getAttributeFactories()
     {
-        $connection  = $this->mockConnection();
+        $connection = $this->mockConnection();
+        $stringUtil = new Adapter(StringUtil::class);
+        $validator  = new Adapter(Validator::class);
 
-        return array(new AttributeTypeFactory($connection));
+        return array(new AttributeTypeFactory($connection, $stringUtil, $validator));
     }
 
     /**
@@ -101,9 +107,11 @@ class TableMultiAttributeTypeFactoryTest extends TestCase
      */
     public function testCreateAttribute()
     {
-        $connection  = $this->mockConnection();
+        $connection = $this->mockConnection();
+        $stringUtil = new Adapter(StringUtil::class);
+        $validator  = new Adapter(Validator::class);
 
-        $factory   = new AttributeTypeFactory($connection);
+        $factory   = new AttributeTypeFactory($connection, $stringUtil, $validator);
         $values    = array(
             'tabletext_cols' => ''
         );
