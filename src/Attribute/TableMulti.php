@@ -127,7 +127,8 @@ class TableMulti extends BaseComplex
      */
     public function searchFor($strPattern)
     {
-        $query     = 'SELECT DISTINCT t.item_id FROM tl_metamodel_tabletext AS t WHERE t.value LIKE :value AND t.att_id = :id';
+        $query     =
+            'SELECT DISTINCT t.item_id FROM tl_metamodel_tabletext AS t WHERE t.value LIKE :value AND t.att_id = :id';
         $statement = $this->connection->prepare($query);
         $statement->bindValue('value', str_replace(['*', '?'], ['%', '_'], $strPattern));
         $statement->bindValue('id', $this->get('id'));
@@ -227,7 +228,7 @@ class TableMulti extends BaseComplex
                     }
 
                     $updateSql = $queryBuilder->getSQL();
-                    $sql       .= ' ON DUPLICATE KEY ' . str_replace($this->getValueTable() . ' SET ', '', $updateSql);
+                    $sql      .= ' ON DUPLICATE KEY ' . str_replace($this->getValueTable() . ' SET ', '', $updateSql);
 
                     $this->connection->executeQuery($sql, $parameters);
                 }
