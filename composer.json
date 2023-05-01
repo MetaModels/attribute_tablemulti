@@ -79,14 +79,6 @@
   },
   "extra": {
     "contao-manager-plugin": "MetaModels\\AttributeTableMultiBundle\\ContaoManager\\Plugin",
-    "contao": {
-      "transifex": {
-        "project": "metamodels",
-        "prefix": "attribute_tablemulti-",
-        "languages_cto": "src/Resources/contao/languages",
-        "languages_tx": ".tx"
-      }
-    },
     "branch-alias": {
       "dev-feature/2.3.0": "2.3.x-dev"
     }
