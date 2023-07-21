@@ -182,13 +182,30 @@ class TableMulti extends BaseComplex
             if (!empty($arrFieldDef['eval']['tl_class'])) {
                 $config['tl_class'] = isset($config['tl_class'])
                     ? $config['tl_class'] . ' ' . $arrFieldDef['eval']['tl_class']
-                    : $config['tl_class'];
+                    : $arrFieldDef['eval']['tl_class'];
+            }
+
+            // Hide buttons if readonly.
+            if (!empty($arrFieldDef['eval']['readonly'])) {
+                $config['hideButtons'] = true;
             }
 
             // Add field configs.
             foreach ($config['columnFields'] as $col => $data) {
                 $config['columnFields']['col_' . $col] = $data;
                 unset($config['columnFields'][$col]);
+
+                // Add readonly and delete picker and wizard class.
+                if (!empty($arrFieldDef['eval']['readonly'])) {
+                    $config['columnFields']['col_' . $col]['eval']['readonly'] = true;
+                    unset(
+                        $config['columnFields']['col_' . $col]['eval']['dcaPicker'],
+                        $config['columnFields']['col_' . $col]['eval']['datepicker'],
+                        $config['columnFields']['col_' . $col]['eval']['colorpicker']
+                    );
+                    $config['columnFields']['col_' . $col]['eval']['tl_class'] =
+                        \str_replace('wizard', '', $config['columnFields']['col_' . $col]['eval']['tl_class'] ?? '');
+                }
             }
 
             // Build the array.
