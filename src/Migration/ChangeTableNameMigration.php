@@ -3,7 +3,7 @@
 /**
  * This file is part of MetaModels/attribute_tablemulti.
  *
- * (c) 2012-2020 The MetaModels team.
+ * (c) 2012-2024 The MetaModels team.
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -12,7 +12,7 @@
  *
  * @package    MetaModels/attribute_tablemulti
  * @author     Ingolf Steinhardt <info@e-spin.de>
- * @copyright  2012-2020 The MetaModels team.
+ * @copyright  2012-2024 The MetaModels team.
  * @license    https://github.com/MetaModels/attribute_tablemulti/blob/master/LICENSE LGPL-3.0-or-later
  * @filesource
  */
@@ -35,7 +35,7 @@ class ChangeTableNameMigration extends AbstractMigration
      *
      * @var Connection
      */
-    private $connection;
+    private Connection $connection;
 
     /**
      * Create a new instance.
@@ -65,7 +65,7 @@ class ChangeTableNameMigration extends AbstractMigration
      */
     public function shouldRun(): bool
     {
-        $schemaManager = $this->connection->getSchemaManager();
+        $schemaManager = $this->connection->createSchemaManager();
         if ($schemaManager->tablesExist(['tl_metamodel_multi'])) {
             return true;
         }
@@ -80,7 +80,7 @@ class ChangeTableNameMigration extends AbstractMigration
      */
     public function run(): MigrationResult
     {
-        $schemaManager = $this->connection->getSchemaManager();
+        $schemaManager = $this->connection->createSchemaManager();
 
         if (!$schemaManager->tablesExist(['tl_metamodel_multi'])) {
             return new MigrationResult(false, '');
@@ -94,7 +94,7 @@ class ChangeTableNameMigration extends AbstractMigration
             ->where('t.type=:old_name')
             ->setParameter('new_name', 'tablemulti')
             ->setParameter('old_name', 'multi')
-            ->execute();
+            ->executeQuery();
 
         $this->connection->createQueryBuilder()
             ->update('tl_metamodel_rendersetting', 't')
@@ -102,7 +102,7 @@ class ChangeTableNameMigration extends AbstractMigration
             ->where('t.template=:old_name')
             ->setParameter('new_name', 'mm_attr_tablemulti')
             ->setParameter('old_name', 'mm_attr_multi')
-            ->execute();
+            ->executeQuery();
 
         return new MigrationResult(true, 'Rename table tl_metamodel_multi to tl_metamodel_tablemulti.');
     }

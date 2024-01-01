@@ -31,6 +31,7 @@ use Contao\StringUtil;
 use Contao\Validator;
 use Doctrine\DBAL\Connection;
 use MetaModels\AttributeTableMultiBundle\Attribute\TableMulti;
+use MetaModels\IMetaModel;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -50,22 +51,22 @@ class TableMultiTest extends TestCase
      */
     protected function mockMetaModel($language, $fallbackLanguage)
     {
-        $metaModel = $this->getMockForAbstractClass('MetaModels\IMetaModel');
+        $metaModel = $this->getMockBuilder(IMetaModel::class)->getMock();
 
         $metaModel
-            ->expects($this->any())
+            ->expects(self::any())
             ->method('getTableName')
-            ->will($this->returnValue('mm_unittest'));
+            ->willReturn('mm_unittest');
 
         $metaModel
-            ->expects($this->any())
+            ->expects(self::any())
             ->method('getActiveLanguage')
-            ->will($this->returnValue($language));
+            ->willReturn($language);
 
         $metaModel
-            ->expects($this->any())
+            ->expects(self::any())
             ->method('getFallbackLanguage')
-            ->will($this->returnValue($fallbackLanguage));
+            ->willReturn($fallbackLanguage);
 
         return $metaModel;
     }
