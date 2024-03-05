@@ -116,7 +116,7 @@ class TableMulti extends BaseComplex
             );
             // @codingStandardsIgnoreEnd
             $validator = System::getContainer()->get('contao.framework')?->getAdapter(Validator::class);
-            assert($stringUtil instanceof Adapter);
+            assert($validator instanceof Adapter);
         }
 
         $this->connection = $connection;
@@ -281,7 +281,7 @@ class TableMulti extends BaseComplex
             ->setParameter('att_id', $this->get('id'))
             ->groupBy('t.value');
 
-        if ($idList) {
+        if (null !== $idList) {
             $builder
                 ->andWhere('t.item_id IN (:id_list)')
                 ->orderBy('FIELD(t.id,:id_list)')
@@ -291,11 +291,11 @@ class TableMulti extends BaseComplex
         $statement = $builder->executeQuery();
 
         $arrResult = [];
-        while ($objRow = $statement->fetchFirstColumn()) {
-            $strValue = $objRow->value;
+        while ($objRow = $statement->fetchAssociative()) {
+            $strValue = $objRow['value'];
 
             if (\is_array($arrCount)) {
-                $arrCount[$strValue] = $objRow->mm_count;
+                $arrCount[$strValue] = $objRow['mm_count'];
             }
 
             $arrResult[$strValue] = $strValue;
@@ -341,20 +341,20 @@ class TableMulti extends BaseComplex
     /**
      * Build the where clause.
      *
-     * @param QueryBuilder   $queryBuilder The query builder.
-     * @param null|array|int $mixIds       One, none or many ids to use.
-     * @param null           $intRow       The row number, optional.
-     * @param null           $varCol       The col number, optional.
-     * @param null           $tableAlias   The table alias, optional.
+     * @param QueryBuilder             $queryBuilder The query builder.
+     * @param null|list<string>|string $mixIds       One, none or many ids to use.
+     * @param int|null                 $intRow       The row number, optional.
+     * @param string|null              $varCol       The col number, optional.
+     * @param string                   $tableAlias   The table alias, optional.
      */
     protected function buildWhere(
         QueryBuilder $queryBuilder,
         $mixIds,
         $intRow = null,
         $varCol = null,
-        $tableAlias = null
-    ) {
-        if (null !== $tableAlias) {
+        string $tableAlias = ''
+    ): void {
+        if ('' !== $tableAlias) {
             $tableAlias .= '.';
         }
 
@@ -362,24 +362,30 @@ class TableMulti extends BaseComplex
             ->andWhere($tableAlias . 'att_id = :att_id')
             ->setParameter('att_id', (int) $this->get('id'));
 
-        if (!empty($mixIds)) {
-            if (\is_array($mixIds)) {
-                $queryBuilder
-                    ->andWhere($tableAlias . 'item_id IN (:item_ids)')
-                    ->setParameter('item_ids', $mixIds, ArrayParameterType::STRING);
-            } else {
-                $queryBuilder
-                    ->andWhere($tableAlias . 'item_id = :item_id')
-                    ->setParameter('item_id', $mixIds);
-            }
-        }
-
         if (\is_int($intRow) && \is_string($varCol)) {
             $queryBuilder
                 ->andWhere($tableAlias . 'row = :row AND ' . $tableAlias . 'col = :col')
                 ->setParameter('row', $intRow)
                 ->setParameter('col', $varCol);
         }
+
+        if (null === $mixIds) {
+            return;
+        }
+        if (\is_array($mixIds)) {
+            if ([] === $mixIds) {
+                return;
+            }
+
+            $queryBuilder
+                ->andWhere($tableAlias . 'item_id IN (:item_ids)')
+                ->setParameter('item_ids', $mixIds, ArrayParameterType::STRING);
+
+            return;
+        }
+        $queryBuilder
+            ->andWhere($tableAlias . 'item_id = :item_id')
+            ->setParameter('item_id', $mixIds);
     }
 
     /**
@@ -441,19 +447,19 @@ class TableMulti extends BaseComplex
         $value = $arrCell['value'];
         // Convert the value, if is a binary uuid to a string uuid, for save in text blob column.
         if (
-            ($this->validator->isBinaryUuid($value))
-            && ($this->validator->isStringUuid($convertedValue = $this->stringUtil->binToUuid($value)))
+            $this->validator::isBinaryUuid($value)
+            && $this->validator::isStringUuid($convertedValue = $this->stringUtil::binToUuid($value))
         ) {
             $value = $convertedValue;
         }
 
-        return array(
+        return [
             'tstamp'  => \time(),
             'value'   => (string) $value,
             'att_id'  => $this->get('id'),
             'row'     => (int) $arrCell['row'],
-            'col'     => $arrCell['col'],
+            'col'     => (int) $arrCell['col'],
             'item_id' => $intId,
-        );
+        ];
     }
 }

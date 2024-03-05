@@ -69,7 +69,7 @@ class AttributeTypeFactory extends AbstractAttributeTypeFactory
         $this->validator  = $validator;
         $this->typeName   = 'tablemulti';
         $this->typeIcon   = 'bundles/metamodelsattributetablemulti/tablemulti.png';
-        $this->typeClass  = 'MetaModels\Attribute\TableMulti\TableMulti';
+        $this->typeClass  = TableMulti::class;
     }
 
     /**
