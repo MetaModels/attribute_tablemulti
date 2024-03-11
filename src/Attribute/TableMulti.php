@@ -53,16 +53,16 @@ class TableMulti extends BaseComplex
     /**
      * The string util.
      *
-     * @var StringUtil|Adapter
+     * @var Adapter<StringUtil>
      */
-    private Adapter|StringUtil $stringUtil;
+    private Adapter $stringUtil;
 
     /**
      * The validator.
      *
-     * @var Validator|Adapter
+     * @var Adapter<Validator>
      */
-    private Adapter|Validator $validator;
+    private Adapter $validator;
 
     /**
      * Instantiate an MetaModel attribute.
