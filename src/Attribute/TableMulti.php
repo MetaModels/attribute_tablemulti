@@ -319,6 +319,8 @@ class TableMulti extends BaseComplex
         $arrReturn = [];
 
         while ($row = $statement->fetchAssociative()) {
+            // The contao deserialize will check if we have some serialized data or not.
+            $row['value'] = \Contao\StringUtil::deserialize($row['value']);
             $arrReturn[$row['item_id']][$row['row']][$row['col']] = $row;
         }
 
@@ -447,6 +449,8 @@ class TableMulti extends BaseComplex
             && ($this->validator->isStringUuid($convertedValue = $this->stringUtil->binToUuid($value)))
         ) {
             $value = $convertedValue;
+        } elseif (\is_array($value)){
+            $value = \serialize($value);
         }
 
         return array(
