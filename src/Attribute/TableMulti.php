@@ -38,6 +38,16 @@ use Doctrine\DBAL\Connection;
 use MetaModels\Attribute\BaseComplex;
 use MetaModels\IMetaModel;
 
+use function array_keys;
+use function array_map;
+use function array_merge;
+use function is_array;
+use function is_int;
+use function is_string;
+use function str_replace;
+use function substr;
+use function time;
+
 /**
  * This is the MetaModelAttribute class for handling table text fields.
  */
@@ -129,17 +139,20 @@ class TableMulti extends BaseComplex
      */
     public function searchFor($strPattern)
     {
-        $strPattern = \str_replace(['*', '?'], ['%', '_'], $strPattern);
+        $strPattern = str_replace(['*', '?'], ['%', '_'], $strPattern);
 
-        return $this->connection->createQueryBuilder()
+        $statement = $this->connection
+            ->createQueryBuilder()
             ->select('t.item_id')
             ->from($this->getValueTable(), 't')
             ->where('t.value LIKE :pattern')
             ->andWhere('t.att_id = :id')
             ->setParameter('pattern', $strPattern)
             ->setParameter('id', $this->get('id'))
-            ->executeQuery()
-            ->fetchFirstColumn();
+            ->executeQuery();
+
+        // Return value list as list<mixed>, parent function wants a list<string> so we make a cast.
+        return array_map(static fn (mixed $value) => (string) $value, $statement->fetchFirstColumn());
     }
 
     /**
@@ -147,7 +160,7 @@ class TableMulti extends BaseComplex
      */
     public function getAttributeSettingNames()
     {
-        return \array_merge(parent::getAttributeSettingNames(), []);
+        return array_merge(parent::getAttributeSettingNames(), []);
     }
 
     /**
@@ -206,7 +219,7 @@ class TableMulti extends BaseComplex
                         $config['columnFields']['col_' . $col]['eval']['colorpicker']
                     );
                     $config['columnFields']['col_' . $col]['eval']['tl_class'] =
-                        \str_replace('wizard', '', $config['columnFields']['col_' . $col]['eval']['tl_class'] ?? '');
+                        str_replace('wizard', '', $config['columnFields']['col_' . $col]['eval']['tl_class'] ?? '');
                 }
             }
 
@@ -229,7 +242,7 @@ class TableMulti extends BaseComplex
         }
 
         // Get the ids.
-        $arrIds = \array_keys($arrValues);
+        $arrIds = array_keys($arrValues);
 
         // Reset all data for the ids.
         $this->unsetDataFor($arrIds);
@@ -259,7 +272,7 @@ class TableMulti extends BaseComplex
                     }
 
                     $updateSql = $queryBuilder->getSQL();
-                    $sql      .= ' ON DUPLICATE KEY ' . \str_replace($this->getValueTable() . ' SET ', '', $updateSql);
+                    $sql      .= ' ON DUPLICATE KEY ' . str_replace($this->getValueTable() . ' SET ', '', $updateSql);
 
                     $this->connection->executeQuery($sql, $parameters);
                 }
@@ -294,7 +307,7 @@ class TableMulti extends BaseComplex
         while ($objRow = $statement->fetchAssociative()) {
             $strValue = $objRow['value'];
 
-            if (\is_array($arrCount)) {
+            if (is_array($arrCount)) {
                 $arrCount[$strValue] = $objRow['mm_count'];
             }
 
@@ -362,7 +375,7 @@ class TableMulti extends BaseComplex
             ->andWhere($tableAlias . 'att_id = :att_id')
             ->setParameter('att_id', (int) $this->get('id'));
 
-        if (\is_int($intRow) && \is_string($varCol)) {
+        if (is_int($intRow) && is_string($varCol)) {
             $queryBuilder
                 ->andWhere($tableAlias . 'row = :row AND ' . $tableAlias . 'col = :col')
                 ->setParameter('row', $intRow)
@@ -372,7 +385,7 @@ class TableMulti extends BaseComplex
         if (null === $mixIds) {
             return;
         }
-        if (\is_array($mixIds)) {
+        if (is_array($mixIds)) {
             if ([] === $mixIds) {
                 return;
             }
@@ -393,7 +406,7 @@ class TableMulti extends BaseComplex
      */
     public function valueToWidget($varValue)
     {
-        if (!\is_array($varValue)) {
+        if (!is_array($varValue)) {
             return [];
         }
 
@@ -413,7 +426,7 @@ class TableMulti extends BaseComplex
     public function widgetToValue($varValue, $itemId)
     {
 
-        if (!\is_array($varValue)) {
+        if (!is_array($varValue)) {
             return [];
         }
 
@@ -422,7 +435,7 @@ class TableMulti extends BaseComplex
         $intRow = 0;
         foreach ($varValue as $k => $row) {
             foreach ($row as $kk => $col) {
-                $kk = \substr($kk, 4);
+                $kk = substr($kk, 4);
 
                 $newValue[$k][$kk]['value'] = $col;
                 $newValue[$k][$kk]['col']   = $kk;
@@ -437,8 +450,8 @@ class TableMulti extends BaseComplex
     /**
      * Calculate the array of query parameters for the given cell.
      *
-     * @param array $arrCell The cell to calculate.
-     * @param int   $intId   The data set id.
+     * @param array  $arrCell The cell to calculate.
+     * @param string $intId   The data set id.
      *
      * @return array
      */
@@ -447,14 +460,14 @@ class TableMulti extends BaseComplex
         $value = $arrCell['value'];
         // Convert the value, if is a binary uuid to a string uuid, for save in text blob column.
         if (
-            $this->validator::isBinaryUuid($value)
-            && $this->validator::isStringUuid($convertedValue = $this->stringUtil::binToUuid($value))
+            $this->validator->isBinaryUuid($value)
+            && $this->validator->isStringUuid($convertedValue = $this->stringUtil->binToUuid($value))
         ) {
             $value = $convertedValue;
         }
 
         return [
-            'tstamp'  => \time(),
+            'tstamp'  => time(),
             'value'   => (string) $value,
             'att_id'  => $this->get('id'),
             'row'     => (int) $arrCell['row'],
