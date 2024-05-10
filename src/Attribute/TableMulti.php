@@ -3,7 +3,7 @@
 /**
  * This file is part of MetaModels/attribute_tablemulti.
  *
- * (c) 2012-2023 The MetaModels team.
+ * (c) 2012-2024 The MetaModels team.
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -21,7 +21,7 @@
  * @author     David Molineus <david.molineus@netzmacht.de>
  * @author     Ingolf Steinhardt <info@e-spin.de>
  * @author     Sven Baumann <baumann.sv@gmail.com>
- * @copyright  2012-2023 The MetaModels team.
+ * @copyright  2012-2024 The MetaModels team.
  * @license    https://github.com/MetaModels/attribute_tablemulti/blob/master/LICENSE LGPL-3.0-or-later
  * @filesource
  */
@@ -32,10 +32,21 @@ use Contao\CoreBundle\Framework\Adapter;
 use Contao\StringUtil;
 use Contao\System;
 use Contao\Validator;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Query\QueryBuilder;
 use Doctrine\DBAL\Connection;
 use MetaModels\Attribute\BaseComplex;
 use MetaModels\IMetaModel;
+
+use function array_keys;
+use function array_map;
+use function array_merge;
+use function is_array;
+use function is_int;
+use function is_string;
+use function str_replace;
+use function substr;
+use function time;
 
 /**
  * This is the MetaModelAttribute class for handling table text fields.
@@ -47,21 +58,21 @@ class TableMulti extends BaseComplex
      *
      * @var Connection
      */
-    private $connection;
+    private Connection $connection;
 
     /**
      * The string util.
      *
-     * @var StringUtil|Adapter
+     * @var Adapter<StringUtil>
      */
-    private $stringUtil;
+    private Adapter $stringUtil;
 
     /**
      * The validator.
      *
-     * @var Validator|Adapter
+     * @var Adapter<Validator>
      */
-    private $validator;
+    private Adapter $validator;
 
     /**
      * Instantiate an MetaModel attribute.
@@ -69,11 +80,9 @@ class TableMulti extends BaseComplex
      * Note that you should not use this directly but use the factory classes to instantiate attributes.
      *
      * @param IMetaModel      $objMetaModel The MetaModel instance this attribute belongs to.
-     *
      * @param array           $arrData      The information array, for attribute information, refer to documentation of
      *                                      table tl_metamodel_attribute and documentation of the certain attribute
      *                                      classes for information what values are understood.
-     *
      * @param Connection|null $connection   The database connection.
      * @param Adapter|null    $stringUtil   The string util.
      * @param Adapter|null    $validator    The validator.
@@ -95,6 +104,7 @@ class TableMulti extends BaseComplex
             );
             // @codingStandardsIgnoreEnd
             $connection = System::getContainer()->get('database_connection');
+            assert($connection instanceof Connection);
         }
 
         if (null === $stringUtil) {
@@ -104,7 +114,8 @@ class TableMulti extends BaseComplex
                 E_USER_DEPRECATED
             );
             // @codingStandardsIgnoreEnd
-            $stringUtil = System::getContainer()->get('contao.framework')->getAdapter(StringUtil::class);
+            $stringUtil = System::getContainer()->get('contao.framework')?->getAdapter(StringUtil::class);
+            assert($stringUtil instanceof Adapter);
         }
 
         if (null === $validator) {
@@ -114,7 +125,8 @@ class TableMulti extends BaseComplex
                 E_USER_DEPRECATED
             );
             // @codingStandardsIgnoreEnd
-            $validator = System::getContainer()->get('contao.framework')->getAdapter(Validator::class);
+            $validator = System::getContainer()->get('contao.framework')?->getAdapter(Validator::class);
+            assert($validator instanceof Adapter);
         }
 
         $this->connection = $connection;
@@ -127,17 +139,20 @@ class TableMulti extends BaseComplex
      */
     public function searchFor($strPattern)
     {
-        $strPattern = \str_replace(['*', '?'], ['%', '_'], $strPattern);
+        $strPattern = str_replace(['*', '?'], ['%', '_'], $strPattern);
 
-        return $this->connection->createQueryBuilder()
+        $statement = $this->connection
+            ->createQueryBuilder()
             ->select('t.item_id')
             ->from($this->getValueTable(), 't')
             ->where('t.value LIKE :pattern')
             ->andWhere('t.att_id = :id')
             ->setParameter('pattern', $strPattern)
             ->setParameter('id', $this->get('id'))
-            ->executeQuery()
-            ->fetchFirstColumn();
+            ->executeQuery();
+
+        // Return value list as list<mixed>, parent function wants a list<string> so we make a cast.
+        return array_map(static fn (mixed $value) => (string) $value, $statement->fetchFirstColumn());
     }
 
     /**
@@ -204,7 +219,7 @@ class TableMulti extends BaseComplex
                         $config['columnFields']['col_' . $col]['eval']['colorpicker']
                     );
                     $config['columnFields']['col_' . $col]['eval']['tl_class'] =
-                        \str_replace('wizard', '', $config['columnFields']['col_' . $col]['eval']['tl_class'] ?? '');
+                        str_replace('wizard', '', $config['columnFields']['col_' . $col]['eval']['tl_class'] ?? '');
                 }
             }
 
@@ -279,21 +294,21 @@ class TableMulti extends BaseComplex
             ->setParameter('att_id', $this->get('id'))
             ->groupBy('t.value');
 
-        if ($idList) {
+        if (null !== $idList) {
             $builder
                 ->andWhere('t.item_id IN (:id_list)')
                 ->orderBy('FIELD(t.id,:id_list)')
-                ->setParameter('id_list', $idList, Connection::PARAM_INT_ARRAY);
+                ->setParameter('id_list', $idList, ArrayParameterType::INTEGER);
         }
 
         $statement = $builder->executeQuery();
 
         $arrResult = [];
-        while ($objRow = $statement->fetchFirstColumn()) {
-            $strValue = $objRow->value;
+        while ($objRow = $statement->fetchAssociative()) {
+            $strValue = $objRow['value'];
 
             if (is_array($arrCount)) {
-                $arrCount[$strValue] = $objRow->mm_count;
+                $arrCount[$strValue] = $objRow['mm_count'];
             }
 
             $arrResult[$strValue] = $strValue;
@@ -315,7 +330,7 @@ class TableMulti extends BaseComplex
 
         $this->buildWhere($queryBuilder, $arrIds, null, null, 't');
 
-        $statement = $queryBuilder->execute();
+        $statement = $queryBuilder->executeQuery();
         $arrReturn = [];
 
         while ($row = $statement->fetchAssociative()) {
@@ -335,30 +350,26 @@ class TableMulti extends BaseComplex
         $queryBuilder = $this->connection->createQueryBuilder()->delete($this->getValueTable());
         $this->buildWhere($queryBuilder, $arrIds, null, null, $this->getValueTable());
 
-        $queryBuilder->execute();
+        $queryBuilder->executeQuery();
     }
 
     /**
      * Build the where clause.
      *
-     * @param QueryBuilder   $queryBuilder The query builder.
-     *
-     * @param null|array|int $mixIds       One, none or many ids to use.
-     *
-     * @param null           $intRow       The row number, optional.
-     *
-     * @param null           $varCol       The col number, optional.
-     *
-     * @param null           $tableAlias   The table alias, optional.
+     * @param QueryBuilder             $queryBuilder The query builder.
+     * @param null|list<string>|string $mixIds       One, none or many ids to use.
+     * @param int|null                 $intRow       The row number, optional.
+     * @param string|null              $varCol       The col number, optional.
+     * @param string                   $tableAlias   The table alias, optional.
      */
     protected function buildWhere(
         QueryBuilder $queryBuilder,
         $mixIds,
         $intRow = null,
         $varCol = null,
-        $tableAlias = null
-    ) {
-        if (null !== $tableAlias) {
+        string $tableAlias = ''
+    ): void {
+        if ('' !== $tableAlias) {
             $tableAlias .= '.';
         }
 
@@ -366,24 +377,30 @@ class TableMulti extends BaseComplex
             ->andWhere($tableAlias . 'att_id = :att_id')
             ->setParameter('att_id', (int) $this->get('id'));
 
-        if (!empty($mixIds)) {
-            if (is_array($mixIds)) {
-                $queryBuilder
-                    ->andWhere($tableAlias . 'item_id IN (:item_ids)')
-                    ->setParameter('item_ids', $mixIds, Connection::PARAM_STR_ARRAY);
-            } else {
-                $queryBuilder
-                    ->andWhere($tableAlias . 'item_id = :item_id')
-                    ->setParameter('item_id', $mixIds);
-            }
-        }
-
         if (is_int($intRow) && is_string($varCol)) {
             $queryBuilder
                 ->andWhere($tableAlias . 'row = :row AND ' . $tableAlias . 'col = :col')
                 ->setParameter('row', $intRow)
                 ->setParameter('col', $varCol);
         }
+
+        if (null === $mixIds) {
+            return;
+        }
+        if (is_array($mixIds)) {
+            if ([] === $mixIds) {
+                return;
+            }
+
+            $queryBuilder
+                ->andWhere($tableAlias . 'item_id IN (:item_ids)')
+                ->setParameter('item_ids', $mixIds, ArrayParameterType::STRING);
+
+            return;
+        }
+        $queryBuilder
+            ->andWhere($tableAlias . 'item_id = :item_id')
+            ->setParameter('item_id', $mixIds);
     }
 
     /**
@@ -435,9 +452,8 @@ class TableMulti extends BaseComplex
     /**
      * Calculate the array of query parameters for the given cell.
      *
-     * @param array $arrCell The cell to calculate.
-     *
-     * @param int   $intId   The data set id.
+     * @param array  $arrCell The cell to calculate.
+     * @param string $intId   The data set id.
      *
      * @return array
      */
@@ -445,21 +461,22 @@ class TableMulti extends BaseComplex
     {
         $value = $arrCell['value'];
         // Convert the value, if is a binary uuid to a string uuid, for save in text blob column.
-        if (($this->validator->isBinaryUuid($value))
-            && ($this->validator->isStringUuid($convertedValue = $this->stringUtil->binToUuid($value)))
+        if (
+            $this->validator->isBinaryUuid($value)
+            && $this->validator->isStringUuid($convertedValue = $this->stringUtil->binToUuid($value))
         ) {
             $value = $convertedValue;
         } elseif (\is_array($value)){
             $value = \serialize($value);
         }
 
-        return array(
+        return [
             'tstamp'  => time(),
             'value'   => (string) $value,
             'att_id'  => $this->get('id'),
             'row'     => (int) $arrCell['row'],
-            'col'     => $arrCell['col'],
+            'col'     => (int) $arrCell['col'],
             'item_id' => $intId,
-        );
+        ];
     }
 }
