@@ -466,7 +466,7 @@ class TableMulti extends BaseComplex
             && $this->validator->isStringUuid($convertedValue = $this->stringUtil->binToUuid($value))
         ) {
             $value = $convertedValue;
-        } elseif (\is_array($value)){
+        } elseif (\is_array($value)) {
             $value = \serialize($value);
         }
 
