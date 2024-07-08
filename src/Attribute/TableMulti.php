@@ -475,7 +475,7 @@ class TableMulti extends BaseComplex
             'value'   => (string) $value,
             'att_id'  => $this->get('id'),
             'row'     => (int) $arrCell['row'],
-            'col'     => (int) $arrCell['col'],
+            'col'     => $arrCell['col'],
             'item_id' => $intId,
         ];
     }
