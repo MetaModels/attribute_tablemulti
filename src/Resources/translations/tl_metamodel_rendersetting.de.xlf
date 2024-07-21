@@ -1,0 +1,14 @@
+<?xml version="1.0" ?><xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
+  <file source-language="en" datatype="plaintext" original="src/Resources/translations/tl_metamodel_rendersetting.en.xlf" target-language="de">
+    <body>
+      <trans-unit id="tablemulti_hide_tablehead.label" resname="tablemulti_hide_tablehead.label">
+        <source>Hide tablehead</source>
+        <target>Tabellenkopf verbergen</target>
+      </trans-unit>
+      <trans-unit id="tablemulti_hide_tablehead.description" resname="tablemulti_hide_tablehead.description">
+        <source>Select to hide the head of the table.</source>
+        <target>Auswählen, um den Tabellenkopf zu verbergen.</target>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>
