@@ -7,6 +7,9 @@
 
 The table multi attribute for MetaModels.
 
+With this attribute you are able to create complex table structures with the
+[MultiColumnWizard]( https://github.com/menatwork/contao-multicolumnwizard-bundle).
+
 
 ## Original idea by Byteworks:
 
@@ -16,46 +19,42 @@ The table multi attribute for MetaModels.
 
 ## Configure the table multi attribute
 
-With this attribute you are able to create complex table structures with the [MultiColumnWizard]( https://github.com/menatwork/contao-multicolumnwizard-bundle).
-Create the configuration in e.g. the app/Resources/contao/config/dcaconfig.php or somewhere else where the config is loaded and write something like this:
-
+Create the configuration in e.g. the contao/config/config.php or src/Resources/contao/config/config.php or somewhere
+else where the config is loaded and write something like this:
 
 The `mm_test` is the name of the table and the `multi_test` is the name of the field.
 
 ```php
-$GLOBALS['TL_CONFIG']['metamodelsattribute_multi']['mm_test']['multi_test'] = array(
-    'tl_class'     => 'clr',
-    'minCount'     => 0,
-    'columnFields' => array(
-        'col_title' => array(
+$GLOBALS['TL_CONFIG']['metamodelsattribute_multi']['mm_test']['multi_test'] = [
+    'minCount'     => 1,
+    'maxCount'     => 5,
+    'columnFields' => [
+        'col_title'     => [
             'label'     => 'Title',
             'exclude'   => true,
             'inputType' => 'text',
-            'eval'      => array
-            (
-                'style'=>'width:130px'
-            )
-        ),
-        'col_highlight' => array(
+            'eval'      => [
+                'style' => 'width:130px'
+            ]
+        ],
+        'col_highlight' => [
             'label'     => 'Hervorheben',
             'exclude'   => true,
             'inputType' => 'checkbox',
-            'eval'      => array
-            (
+            'eval'      => [
                 'style' => 'width:40px'
-            )
-        ),
-        'col_url' => array(
+            ]
+        ],
+        'col_url'       => [
             'label'     => 'URL',
             'exclude'   => true,
             'inputType' => 'text',
-            'eval'      => array
-            (
-                'style'    =>'width:130px', 
-                'mandatory'=>false, 
-                'rgxp'     =>'url'
-            )
-        ),
-    ),
-);
+            'eval'      => [
+                'style'     => 'width:130px',
+                'mandatory' => false,
+                'rgxp'      => 'url'
+            ]
+        ],
+    ],
+];
 ```
