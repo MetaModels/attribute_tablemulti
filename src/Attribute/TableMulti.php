@@ -223,9 +223,8 @@ class TableMulti extends BaseComplex
                 }
             }
 
-            // Build the array.
-            $arrFieldDef['inputType'] = 'multiColumnWizard';
-            $arrFieldDef['eval']      = $config;
+            // Append the eval config.
+            $arrFieldDef['eval'] = $config;
         }
 
         return $arrFieldDef;
